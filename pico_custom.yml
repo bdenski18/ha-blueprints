@@ -104,6 +104,8 @@ trigger:
 variables:
   step: !input step
   speed: !input speed
+  power_on_action: !input power_on_action
+  power_off_action: !input power_off_action
   middle_button_action: !input middle_button_action
 
 condition: []
