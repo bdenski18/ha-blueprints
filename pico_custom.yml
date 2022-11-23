@@ -19,24 +19,6 @@ blueprint:
         entity:
           domain: light
           multiple: true
-    transition_on:
-      name: On Transition
-      description: "The duration in seconds for the light entity to transiton on."
-      selector:
-        number:
-          min: 0
-          max: 15
-          unit_of_measurement: seconds
-      default: 1
-    transition_off:
-      name: Off Transition
-      description: "The duration in seconds for the light entity to transiton off."
-      selector:
-        number:
-          min: 0
-          max: 15
-          unit_of_measurement: seconds
-      default: 2
     step:
       name: Brightness Step Percentage
       description: "The percentage of brightness to which the light is changed when the RAISE/LOWER buttons are pressed and held."
@@ -55,36 +37,24 @@ blueprint:
           max: 2000
           unit_of_measurement: milliseconds
       default: 500
+    power_on_action:
+      name: Power On Button Override
+      description: "Action(s) to execute when Power On button is pressed."
+      selector:
+        action: {}
+      default:
+    power_off_action:
+      name: Power Off Button Override
+      description: "Action(s) to execute when Power Off button is pressed."
+      selector:
+        action: {}
+      default:
     middle_button_action:
       name: Middle (Favorite) Button Override
       description: "Action(s) to execute when MIDDLE button is pressed. If left blank, action will default to setting the light entity to a brightness 80% and color temperature 2700."
       selector:
         action: {}
       default:
-    condition_day:
-      name: Conditions for Day
-      description: "Conditions(s) to determine night mode."
-      selector:
-        condition: {}
-      default:
-    brightness_day:
-      name: Brightness Percentage (Day)
-      description: "The percentage of brightness to which the light turns on at during the day."
-      selector:
-        number:
-          min: 1
-          max: 100
-          unit_of_measurement: percentage
-      default: 100
-    brightness_night:
-      name: Brightness Percentage (Night)
-      description: "The percentage of brightness to which the light turns on at during the night."
-      selector:
-        number:
-          min: 1
-          max: 100
-          unit_of_measurement: percentage
-      default: 1
 
 trigger:
   - platform: device
@@ -144,12 +114,9 @@ action:
         - condition: trigger
           id: on_pressed
       sequence:
-        - service: light.turn_on
-          data:
-            brightness_pct: !input brightness_night
-            transition: !input transition_on
-          target:
-            entity_id: !input entity
+        - choose:
+          - conditions: "{{ power_on_action != none }}"
+            sequence: !input power_on_action
     - conditions:
         - condition: trigger
           id: up_pressed
@@ -184,10 +151,6 @@ action:
             sequence: !input middle_button_action
           default:
             - service: light.turn_on
-              data:
-                transition: !input transition_on
-                brightness_pct: 80
-                kelvin: 2700
               target:
                 entity_id: !input entity
     - conditions:
@@ -219,10 +182,8 @@ action:
         - condition: trigger
           id: off_pressed
       sequence:
-        - service: light.turn_off
-          data:
-            transition: !input transition_off
-          target:
-            entity_id: !input entity
+        - choose:
+          - conditions: "{{ power_off_action != none }}"
+            sequence: !input power_off_action
 
 mode: restart
