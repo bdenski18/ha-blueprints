@@ -61,6 +61,12 @@ blueprint:
       selector:
         action: {}
       default:
+    condition_day:
+      name: Conditions for Day
+      description: "Conditions(s) to determine night mode."
+      selector:
+        condition: {}
+      default:
     brightness_day:
       name: Brightness Percentage (Day)
       description: "The percentage of brightness to which the light turns on at during the day."
