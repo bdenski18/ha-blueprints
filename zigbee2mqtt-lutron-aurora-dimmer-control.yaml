@@ -1,0 +1,75 @@
+blueprint:
+  name: Zigbee2MQTT Lutron Aurora Dimmer Control
+  description: Control any light with the Lutron Aurora remote, integrated by Zigbee2MQTT.
+  domain: automation
+  input:
+    mqtt_topic:
+      selector:
+        text: null
+      name: MQTT Topic
+      description: >-
+        Which MQTT topic do you want to listen for? (ex. zigbee2mqtt/Office Light
+        Dimmer)
+      required: true
+    target:
+      selector:
+        target: {}
+      name: Target
+      description: Which lights do you want to control?
+      required: true
+  source_url: https://github.com/bdenski18/ha-blueprints/blob/main/zigbee2mqtt-lutron-aurora-dimmer-control.yml
+mode: queued
+max_exceeded: silent
+variables:
+  action: "{{ trigger.payload_json.action }}"
+  action_level: "{{ trigger.payload_json.action_level }}"
+  transition_time: "{{ 0.7 }}"
+triggers:
+  - trigger: mqtt
+    topic: !input mqtt_topic
+    payload: brightness_move_to_level
+    value_template: "{{ value_json.action }}"
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ action_level == 0 }}"
+        sequence:
+          - action: light.turn_off
+            metadata: {}
+            data:
+              transition: "{{ transition_time }}"
+            target:
+              area_id: office
+            alias: Turn off lights
+        alias: Lights are on and dial has been pressed (Turn off lights)
+      - conditions:
+          - condition: template
+            value_template: |-
+              {% if action_group %}
+              return true
+              {% else %}
+              return false
+              {% endif %}
+        sequence:
+          - action: light.turn_on
+            metadata: {}
+            data:
+              transition: "{{ transition_time }}"
+              brightness: "{{ action_level }}"
+            target: !input target
+            alias: Turn on lights
+        alias: Lights are off and dial is turned
+    default:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          transition: "{{ transition_time }}"
+          brightness: "{{ action_level }}"
+        target:
+          area_id: office
+        alias: Turn on lights
+      - action: light.turn_on
+        metadata: {}
+        data: {}
+        target: !input target
